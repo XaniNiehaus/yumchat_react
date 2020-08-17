@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import backgroundImage from '../assets/loginSignUpBackground.png';
 import quickChatLogo from '../assets/yumChatLogo.png';
 import {theme} from '../css/cssTheme'
@@ -13,7 +13,7 @@ import Slide from "@material-ui/core/Slide";
 import Grow from "@material-ui/core/Grow";
 import Snackbar from "@material-ui/core/Snackbar";
 import Alert from '@material-ui/lab/Alert';
-import {createNewUser, doesUserExist, getUserByUid, updateUserInfo} from "../services/firestore";
+import {createNewUser, doesUserExist, getUserByUid} from "../services/firestore";
 import {auth} from "../services/firebase";
 import {useDispatch} from "react-redux";
 import {actions} from "../model/redux";
@@ -34,13 +34,13 @@ const AuthBoxContainer = styled(Box)`
   height: 400px;
 `
 
-const LogoContainer = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-`;
+// const LogoContainer = styled(Box)`
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: center;
+//   align-items: center;
+//   color: white;
+// `;
 
 const YumChatLogo = styled.img`
   -webkit-filter: drop-shadow(4px 4px 4px rgba(0, 0, 0, 0.5));
@@ -157,17 +157,18 @@ const AuthenticationPage = (props) => {
                 formAfterValidation["usernameErrorText"] = "Minimum Of 3 Characters Required";
                 isValid = false;
             }
+            if (formData["username"].length >= 14) {
+                formAfterValidation["usernameErrorText"] = "Maximum Of 13 Characters";
+                isValid = false;
+            }
         }
 
         let regexEmail = /\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/;
-        console.log("EMAIL: " + formData["email"]);
         if (!regexEmail.test(formData["email"])) {
-            console.log("Inocrrect email")
             formAfterValidation["emailErrorText"] = "Invalid Email"
             isValid = false;
         }
 
-        console.log("EMAIL: " + formData["password"]);
         if (formData["password"].length <= 5) {
             console.log("invalid password");
             formAfterValidation["passwordErrorText"] = "Minimum Of 6 Characters Required"
@@ -253,9 +254,9 @@ const AuthenticationPage = (props) => {
                     {toastErrorMessage}
                 </Alert>
             </Snackbar>
-            <LogoContainer>
+            {/*<LogoContainer>*/}
                 <YumChatLogo src={quickChatLogo} alt=""/>
-            </LogoContainer>
+            {/*</LogoContainer>*/}
             <Paper elevation={4}>
                 <div style={{height: "50px", width: "100%", position: "relative"}}>
                     <Slide in={isLoginActive} direction="right">
