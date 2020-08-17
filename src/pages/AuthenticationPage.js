@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import backgroundImage from '../assets/loginSignUpBackground.png';
 import quickChatLogo from '../assets/yumChatLogo.png';
-import {theme} from '../model/cssTheme'
+import {theme} from '../css/cssTheme'
 import styled from "styled-components";
 import Box from "@material-ui/core/Box";
 import FormControl from "@material-ui/core/FormControl";
@@ -13,11 +13,10 @@ import Slide from "@material-ui/core/Slide";
 import Grow from "@material-ui/core/Grow";
 import Snackbar from "@material-ui/core/Snackbar";
 import Alert from '@material-ui/lab/Alert';
-import {doesUserExist, getUserByUid, updateUserInfo} from "../services/firestore";
+import {createNewUser, doesUserExist, getUserByUid, updateUserInfo} from "../services/firestore";
 import {auth} from "../services/firebase";
 import {useDispatch} from "react-redux";
 import {actions} from "../model/redux";
-import context from "react-router/modules/RouterContext";
 
 const LoginCanvas = styled(Box)`
   display: flex;
@@ -47,6 +46,10 @@ const YumChatLogo = styled.img`
   -webkit-filter: drop-shadow(4px 4px 4px rgba(0, 0, 0, 0.5));
   filter: drop-shadow(4px 4px 4px rgba(0, 0, 0,0.5));
   margin-bottom: 20px;
+  @media only screen and (max-height: 850px) {
+    margin-top: 0;
+  }
+  margin-top: -150px;
   height: 200px;
 `
 
@@ -68,7 +71,7 @@ const WelcomeBanner = styled(Box)`
 const WelcomeText = styled.h1`
   font-size: 30px;
   color: white;
-  text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
 `
 
 const FormFieldContainer = styled(Box)`
@@ -125,7 +128,6 @@ const AuthenticationPage = (props) => {
         passwordErrorText: "",
     };
 
-
     const [isLoginActive, switchAuthForm] = useState(true);
     const [isErrorDisplayed, setIsErrorDisplayed] = useState(false);
     const [toastErrorMessage, setToastErrorMessage] = useState("");
@@ -158,12 +160,14 @@ const AuthenticationPage = (props) => {
         }
 
         let regexEmail = /\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/;
+        console.log("EMAIL: " + formData["email"]);
         if (!regexEmail.test(formData["email"])) {
             console.log("Inocrrect email")
             formAfterValidation["emailErrorText"] = "Invalid Email"
             isValid = false;
         }
 
+        console.log("EMAIL: " + formData["password"]);
         if (formData["password"].length <= 5) {
             console.log("invalid password");
             formAfterValidation["passwordErrorText"] = "Minimum Of 6 Characters Required"
@@ -174,10 +178,13 @@ const AuthenticationPage = (props) => {
         return isValid;
     }
 
+
     const doAuthenticate = async (e) => {
+        console.log("triggered");
+        console.log(formData)
+        if (e && e.preventDefault) e.preventDefault();
         if (isLoading) return;
         if (!validate()) return;
-        if (e && e.preventDefault) e.preventDefault();
         setIsErrorDisplayed(false);
         setLoading(true);
 
@@ -193,12 +200,19 @@ const AuthenticationPage = (props) => {
 
             try {
                 let res = await auth().createUserWithEmailAndPassword(formData["email"], formData["password"])
-                //todo update redux, and move to the different screen
-                //The auth response doesn't add the user's uid or username to their firestore entry
-                let uid = res.user.uid;
-                await updateUserInfo(formData["email"], {"uid": uid, "username": formData["username"]});
-                //todo update redux again
+                let userDocument = {
+                    username: formData["username"],
+                    email: formData["email"],
+                    uid: res.user.uid
+                }
+                //Create the user entry in firestore
+                await createNewUser(userDocument);
+                updateReduxWithUserDetails(userDocument);
+                setLoading(false);
+                //todo this is a race condition, possible fix with redux-thunk
+                props.history.push('/home');
             } catch (e) {
+                setLoading(false);
                 setToastErrorMessage(e.message);
                 setIsErrorDisplayed(true);
             }
@@ -207,18 +221,28 @@ const AuthenticationPage = (props) => {
             try {
                 let res = await auth().signInWithEmailAndPassword(formData["email"], formData["password"])
                 let userDocument = await getUserByUid(res.user.uid);
-
-                const setReduxUser = actions.user.create.assign;
-                const setReduxSignInStatus = actions.isUserLoggedIn.create.on;
-                dispatch(setReduxSignInStatus());
-                dispatch(setReduxUser(userDocument));
+                updateReduxWithUserDetails(userDocument);
+                setLoading(false);
+                //todo this is a race condition, possible fix with redux-thunk
                 props.history.push('/home');
-
-                console.log(res);
             } catch (e) {
+                setLoading(false);
                 setToastErrorMessage(e.message);
                 setIsErrorDisplayed(true);
             }
+        }
+    }
+
+    const updateReduxWithUserDetails = (userDocument) => {
+        const setReduxUser = actions.user.create.assign;
+        const setReduxSignInStatus = actions.isUserLoggedIn.create.on;
+        dispatch(setReduxSignInStatus());
+        dispatch(setReduxUser(userDocument));
+    }
+
+    const onKeyPressed = (e) => {
+        if (e.keyCode === 13) {
+            doAuthenticate();
         }
     }
 
@@ -247,12 +271,13 @@ const AuthenticationPage = (props) => {
                 </div>
                 <AuthBoxContainer>
                     <AuthFormContainer>
-                        <FormControl>
+                        <FormControl onSubmit={doAuthenticate}>
                             <FormFieldContainer>
                                 <Grow in={!isLoginActive} direction="top">
                                     <TextField value={formData["username"]} id="usernameInput" label="Username"
                                                variant="outlined" required error={formData["usernameErrorText"] !== ""}
                                                helperText={formData["usernameErrorText"]}
+                                               onKeyDown={e => onKeyPressed(e)}
                                                onChange={(e) => {
                                                    updateFieldValue(e, "username");
                                                }}/>
@@ -261,7 +286,7 @@ const AuthenticationPage = (props) => {
                             <FormFieldContainer>
                                 <TextField value={formData["email"]} id="emailInput" label="Email"
                                            variant="outlined" required error={formData["emailErrorText"] !== ""}
-                                           helperText={formData["emailErrorText"]}
+                                           helperText={formData["emailErrorText"]} onKeyDown={e => onKeyPressed(e)}
                                            onChange={(e) => {
                                                updateFieldValue(e, "email");
                                            }}/>
@@ -269,7 +294,7 @@ const AuthenticationPage = (props) => {
                             <FormFieldContainer>
                                 <TextField value={formData["password"]} id="passwordInput" label="Password"
                                            variant="outlined" required error={formData["passwordErrorText"] !== ""}
-                                           helperText={formData["passwordErrorText"]}
+                                           helperText={formData["passwordErrorText"]} onKeyDown={e => onKeyPressed(e)}
                                            onChange={(e) => {
                                                updateFieldValue(e, "password");
                                            }}/>

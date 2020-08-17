@@ -5,11 +5,14 @@ export const doesUserExist = async (username) => {
     return !snapshot.empty;
 }
 
-export const updateUserInfo = async (username, userInfo) => {
-    let snapshot = await firestoreDb.collection("users").where("username", "==", username).get();
+export const updateUserInfo = async (email, userInfo) => {
+    let snapshot = await firestoreDb.collection("users").where("email", "==", email).get();
     if (snapshot.isEmpty) return;
     return snapshot.docs[0].ref.update(userInfo)
-    // return  snapshot.docs[0].reference.set(userInfo);
+}
+
+export const createNewUser = async (userDocument) => {
+    return await firestoreDb.collection("users").add(userDocument);
 }
 
 export const getUserByUid = async (uid) =>{
