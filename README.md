@@ -1,3 +1,10 @@
+![YumChat, Delisious yet lightweight chat application](https://github.com/XaniNiehaus/yumchat_react/blob/master/WelcomeYumChat.PNG)
+
+This is YumChat, a delicious yet lightweight chat application. Built with React, Redux, MaterialUI, and Google Firebase.
+It's not yet complete, so be sure to check back often
+
+-----------------------------------------------
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
