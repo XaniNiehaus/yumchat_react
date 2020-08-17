@@ -1,3 +1,6 @@
+![YumChat, Delisious yet lightweight chat application](https://github.com/XaniNiehaus/yumchat_react/blob/master/WelcomeYumChat.PNG)
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
