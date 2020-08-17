@@ -11,4 +11,7 @@ const initialState = {
 const [reducer, actions] = reduxLeaves(initialState);
 const store = createStore(reducer);
 
-export {store}
+export {
+    store,
+    actions
+}

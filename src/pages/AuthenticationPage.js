@@ -8,9 +8,16 @@ import FormControl from "@material-ui/core/FormControl";
 import Paper from "@material-ui/core/Paper";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
-import {Link} from "react-router-dom";
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Slide from "@material-ui/core/Slide";
 import Grow from "@material-ui/core/Grow";
+import Snackbar from "@material-ui/core/Snackbar";
+import Alert from '@material-ui/lab/Alert';
+import {doesUserExist, getUserByUid, updateUserInfo} from "../services/firestore";
+import {auth} from "../services/firebase";
+import {useDispatch} from "react-redux";
+import {actions} from "../model/redux";
+import context from "react-router/modules/RouterContext";
 
 const LoginCanvas = styled(Box)`
   display: flex;
@@ -25,7 +32,7 @@ const LoginCanvas = styled(Box)`
 
 const AuthBoxContainer = styled(Box)`
   width: 350px;
-  height: 350px;
+  height: 400px;
 `
 
 const LogoContainer = styled(Box)`
@@ -59,16 +66,13 @@ const WelcomeBanner = styled(Box)`
 `
 
 const WelcomeText = styled.h1`
-  //line-height: 44px;
   font-size: 30px;
   color: white;
-  //padding-bottom: 1px;
   text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
 `
 
 const FormFieldContainer = styled(Box)`
   padding: 10px;
-  //background-color: blueviolet;
   width: 100%;
 `;
 
@@ -78,7 +82,6 @@ const AuthFormContainer = styled(Box)`
   justify-content: flex-end;
   align-items: center;
   height: 100%;
-  //background-color: azure;
 `;
 
 const ProceedButtonContainer = styled(Box)`
@@ -111,7 +114,8 @@ const LoginSignUpSwitchContainer = styled(Box)`
   //background-color: gray;
 `;
 
-const AuthenticationPage = () => {
+const AuthenticationPage = (props) => {
+    const dispatch = useDispatch();
     const initialFormData = {
         username: "",
         email: "",
@@ -121,31 +125,110 @@ const AuthenticationPage = () => {
         passwordErrorText: "",
     };
 
+
     const [isLoginActive, switchAuthForm] = useState(true);
-    const [formData, updateFormData] = useState({...initialFormData});
+    const [isErrorDisplayed, setIsErrorDisplayed] = useState(false);
+    const [toastErrorMessage, setToastErrorMessage] = useState("");
+    const [formData, setFormData] = useState({...initialFormData});
+    const [isLoading, setLoading] = useState(false);
 
     const changeAuthMode = () => {
+        if (isLoading) return;
         switchAuthForm(!isLoginActive);
-        updateFormData({...initialFormData})
+        setFormData({...initialFormData})
     }
 
     const updateFieldValue = (e, textLocation) => {
-        console.log(e.target.value);
-        console.log(textLocation);
-        updateFormData({...formData, [textLocation]: e.target.value});
-        console.log(formData);
-        // e.target.value
+        setFormData({...formData, [textLocation]: e.target.value});
     }
 
-    const doAuthenticate = (e) => {
-        console.log("FORM SUBMISSION ATTEMPTED!");
-        e.preventDefault();
-        //todo do validate
-        //todo check which form, call on like that
+    const validate = () => {
+        console.log("Validating")
+        let isValid = true;
+        let formAfterValidation = {...formData};
+        formAfterValidation["usernameErrorText"] = "";
+        formAfterValidation["emailErrorText"] = "";
+        formAfterValidation["passwordErrorText"] = "";
+
+        if (!isLoginActive) {
+            if (formData["username"].length <= 2) {
+                formAfterValidation["usernameErrorText"] = "Minimum Of 3 Characters Required";
+                isValid = false;
+            }
+        }
+
+        let regexEmail = /\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/;
+        if (!regexEmail.test(formData["email"])) {
+            console.log("Inocrrect email")
+            formAfterValidation["emailErrorText"] = "Invalid Email"
+            isValid = false;
+        }
+
+        if (formData["password"].length <= 5) {
+            console.log("invalid password");
+            formAfterValidation["passwordErrorText"] = "Minimum Of 6 Characters Required"
+            isValid = false;
+        }
+
+        setFormData({...formAfterValidation});
+        return isValid;
+    }
+
+    const doAuthenticate = async (e) => {
+        if (isLoading) return;
+        if (!validate()) return;
+        if (e && e.preventDefault) e.preventDefault();
+        setIsErrorDisplayed(false);
+        setLoading(true);
+
+        //Sign up
+        if (!isLoginActive) {
+            //If the user is signing up, check if the username is taken
+            let isUserNameInUse = await doesUserExist(formData["username"])
+            if (isUserNameInUse) {
+                setFormData({...formData, "usernameErrorText": "Username Already In Use"});
+                setLoading(false);
+                return;
+            }
+
+            try {
+                let res = await auth().createUserWithEmailAndPassword(formData["email"], formData["password"])
+                //todo update redux, and move to the different screen
+                //The auth response doesn't add the user's uid or username to their firestore entry
+                let uid = res.user.uid;
+                await updateUserInfo(formData["email"], {"uid": uid, "username": formData["username"]});
+                //todo update redux again
+            } catch (e) {
+                setToastErrorMessage(e.message);
+                setIsErrorDisplayed(true);
+            }
+        } else {
+            //Log in
+            try {
+                let res = await auth().signInWithEmailAndPassword(formData["email"], formData["password"])
+                let userDocument = await getUserByUid(res.user.uid);
+
+                const setReduxUser = actions.user.create.assign;
+                const setReduxSignInStatus = actions.isUserLoggedIn.create.on;
+                dispatch(setReduxSignInStatus());
+                dispatch(setReduxUser(userDocument));
+                props.history.push('/home');
+
+                console.log(res);
+            } catch (e) {
+                setToastErrorMessage(e.message);
+                setIsErrorDisplayed(true);
+            }
+        }
     }
 
     return (
         <LoginCanvas>
+            <Snackbar open={isErrorDisplayed} autoHideDuration={6000} onClose={() => setIsErrorDisplayed(false)}>
+                <Alert elevation={6} severity="error" variant="filled">
+                    {toastErrorMessage}
+                </Alert>
+            </Snackbar>
             <LogoContainer>
                 <YumChatLogo src={quickChatLogo} alt=""/>
             </LogoContainer>
@@ -161,32 +244,32 @@ const AuthenticationPage = () => {
                             <WelcomeText>Sign Up For YumChat!</WelcomeText>
                         </WelcomeBanner>
                     </Grow>
-                    {/*<WelcomeBanner>*/}
-                    {/*    <WelcomeText>Sign Up For YumChat!</WelcomeText>*/}
-                    {/*</WelcomeBanner>*/}
                 </div>
                 <AuthBoxContainer>
                     <AuthFormContainer>
                         <FormControl>
                             <FormFieldContainer>
                                 <Grow in={!isLoginActive} direction="top">
-                                    <TextField value={switchAuthForm["username"]} id="usernameInput" label="Username"
-                                               variant="outlined" required
+                                    <TextField value={formData["username"]} id="usernameInput" label="Username"
+                                               variant="outlined" required error={formData["usernameErrorText"] !== ""}
+                                               helperText={formData["usernameErrorText"]}
                                                onChange={(e) => {
                                                    updateFieldValue(e, "username");
                                                }}/>
                                 </Grow>
                             </FormFieldContainer>
                             <FormFieldContainer>
-                                <TextField value={switchAuthForm["email"]} id="emailInput" label="Email"
-                                           variant="outlined" required
+                                <TextField value={formData["email"]} id="emailInput" label="Email"
+                                           variant="outlined" required error={formData["emailErrorText"] !== ""}
+                                           helperText={formData["emailErrorText"]}
                                            onChange={(e) => {
                                                updateFieldValue(e, "email");
                                            }}/>
                             </FormFieldContainer>
                             <FormFieldContainer>
-                                <TextField value={switchAuthForm["password"]} id="passwordInput" label="Password"
-                                           variant="outlined" required
+                                <TextField value={formData["password"]} id="passwordInput" label="Password"
+                                           variant="outlined" required error={formData["passwordErrorText"] !== ""}
+                                           helperText={formData["passwordErrorText"]}
                                            onChange={(e) => {
                                                updateFieldValue(e, "password");
                                            }}/>
@@ -195,13 +278,13 @@ const AuthenticationPage = () => {
                                 <Grow in={!isLoginActive} direction="left">
                                     <ProceedButton variant="contained"
                                                    disableElevation onClick={(e) => doAuthenticate(e)}>
-                                        Sign Up
+                                        {isLoading ? <CircularProgress style={{color: "white"}} size={24}/> : "Sign Up"}
                                     </ProceedButton>
                                 </Grow>
                                 <Slide in={isLoginActive} direction="right">
                                     <ProceedButton variant="contained"
                                                    disableElevation onClick={(e) => doAuthenticate(e)}>
-                                        Log In
+                                        {isLoading ? <CircularProgress style={{color: "white"}} size={24}/> : "Log In"}
                                     </ProceedButton>
                                 </Slide>
                             </ProceedButtonContainer>
@@ -210,17 +293,19 @@ const AuthenticationPage = () => {
                             <Slide in={isLoginActive} direction="right" style={{position: "absolute"}}>
                                 <div>
                                     Don't have account yet? &nbsp;
-                                    <Link onClick={() => changeAuthMode()}>
+                                    <a onClick={() => changeAuthMode()}
+                                       style={{textDecoration: "underline", cursor: "pointer"}}>
                                         Sign Up!
-                                    </Link>
+                                    </a>
                                 </div>
                             </Slide>
                             <Grow in={!isLoginActive} direction="right" style={{position: "absolute"}}>
                                 <div>
                                     Already have an account? &nbsp;
-                                    <Link onClick={() => changeAuthMode()}>
+                                    <a onClick={() => changeAuthMode()}
+                                       style={{textDecoration: "underline", cursor: "pointer"}}>
                                         Sign In!
-                                    </Link>
+                                    </a>
                                 </div>
                             </Grow>
                         </LoginSignUpSwitchContainer>
