@@ -1,4 +1,6 @@
 import React from 'react';
+import '../css/messageBubbleStyles.css'
+import '../css/customScrollbar.css'
 import styled from "styled-components";
 import Box from "@material-ui/core/Box";
 import backgroundImage from "../assets/loginSignUpBackground.png";
@@ -12,7 +14,6 @@ import {Typography} from "@material-ui/core";
 import SendIcon from '@material-ui/icons/Send';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 import IconButton from "@material-ui/core/IconButton";
-
 
 const HomeCanvas = styled(Box)`
   display: flex;
@@ -68,6 +69,7 @@ const MasterDetailContainer = styled(Box)`
   height: 100%;
   width: 100%;
   background: ${theme.colors.secondary};
+  overflow: hidden;
 `;
 
 const MasterContainer = styled(Box)`
@@ -97,7 +99,6 @@ const MyNameAndStatusContainer = styled(Box)`
   margin-top: 10px;
   text-overflow: ellipsis;
   overflow-wrap: break-spaces;
-  background: ${theme.colors.secondary};
 `;
 
 const CreateNewChatButtonContainer = styled(Box)`
@@ -143,7 +144,7 @@ const ChatNameBanner = styled(Box)`
 
 const MessageArea = styled(Box)`
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
   height: 100%;
@@ -153,7 +154,7 @@ const MessageArea = styled(Box)`
   background: url(${MessageAreaBackgroundImage}),
     linear-gradient(36deg, rgba(217,42,46,0.7) 12%, rgba(240,209,169,0.7) 79%);
   background-size: cover;
-  opacity: 0.1;
+  opacity: 1;
 `;
 
 const SendNewMessageArea = styled(Box)`
@@ -214,14 +215,86 @@ const Home = () => {
                             </Typography>
                             {/*todo online bubble if personal chat*/}
                         </ChatNameBanner>
-                        <MessageArea>
-                            {BubbleMessageItemTemplate()}
-                        </MessageArea>
+                        <div style={{flex: "1", display: "flex", overflow: "auto"}}>
+                            <MessageArea>
+                                <ul className="rounded-messages messages-width-large customScrollContainer" style={{
+                                    width: "100%",
+                                    padding: "0",
+                                    margin: "0",
+                                    overflowX: "hidden",
+                                    overflowY: "scroll"
+                                }}>
+                                    <li>Hey, how are you?</li>
+                                    <li className="right-msg no-tail">Hey! Long time, I'm doing well. How about
+                                        yourself?
+                                    </li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+                                    <li className="time"><strong>Today</strong> 10:37am</li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
+                                        crazy,
+                                        but in a good way, for me!
+                                    </li>
+
+                                </ul>
+                                {BubbleMessageItemTemplate()}
+                            </MessageArea>
+                        </div>
                         <SendNewMessageArea>
                             <IconButton style={{backgroundColor: "blue"}}>
                                 <AttachFileIcon/>
                             </IconButton>
-                           <MessageInput/>
+                            <MessageInput/>
                             <IconButton style={{backgroundColor: "blue"}}>
                                 <SendIcon/>
                             </IconButton>
@@ -233,9 +306,20 @@ const Home = () => {
     );
 };
 
+let awe = <ul className="rounded-messages messages-width-large" style={{width: "100%"}}>
+    <li>Hey, how are you?</li>
+    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+    <li className="time"><strong>Today</strong> 10:37am</li>
+    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's crazy,
+        but in a good way, for me!
+    </li>
+</ul>
+
 //todo give these components actual parameters
 const BubbleMessageItemTemplate = (props) => {
-    return <></>
+    return <>
+
+    </>
 }
 
 const MasterChatItemTemplate = (props) => {
