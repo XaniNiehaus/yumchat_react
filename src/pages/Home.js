@@ -16,6 +16,7 @@ import AttachFileIcon from '@material-ui/icons/AttachFile';
 import IconButton from "@material-ui/core/IconButton";
 import {useSelector} from "react-redux";
 import {auth} from "../services/firebase";
+import Paper from "@material-ui/core/Paper";
 
 const HomeCanvas = styled(Box)`
   display: flex;
@@ -35,8 +36,10 @@ const AppContainer = styled(Box)`
   align-items: center;
   height: 98%;
   width: 1200px;
-  background: cadetblue;
-   @media only screen and (max-width: 1200px) {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.24);
+  border-radius: ${theme.borderRadii.medium};
+  @media only screen and (max-width: 1200px) {
+    border-radius: 0;
     width: 100%;
     height: 100%;
   }
@@ -49,6 +52,12 @@ const TopBanner = styled(Box)`
   align-items: center;
   height: 50px;
   width: 100%;
+  border-top-left-radius: ${theme.borderRadii.medium};
+  border-top-right-radius: ${theme.borderRadii.medium};
+  @media only screen and (max-width: 1200px) {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
   background: ${theme.colors.tertiary};
 `;
 
@@ -72,6 +81,12 @@ const MasterDetailContainer = styled(Box)`
   width: 100%;
   background: ${theme.colors.secondary};
   overflow: hidden;
+  border-bottom-left-radius: ${theme.borderRadii.medium};
+  border-bottom-right-radius: ${theme.borderRadii.medium};
+  @media only screen and (max-width: 1200px) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
 `;
 
 const MasterContainer = styled(Box)`
@@ -116,6 +131,8 @@ const CreateNewChatButtonContainer = styled(Box)`
 `;
 
 const MasterChatItemList = styled(Box)`
+
+  overflow: auto;
   //todo make this scrollable (if and when the master items overflow)
 `
 
@@ -158,7 +175,7 @@ const MessageArea = styled(Box)`
   //background: ${theme.colors.tertiary};
   //todo manually make the png more opaque
   background: url(${MessageAreaBackgroundImage}),
-    linear-gradient(36deg, rgba(217,42,46,0.7) 12%, rgba(240,209,169,0.7) 79%);
+    linear-gradient(36deg, rgba(217,42,46,0.8) 12%, rgba(218,82,24,0.8) 79%);
   background-size: cover;
   opacity: 1;
 `;
@@ -240,7 +257,7 @@ const Home = () => {
                                 New Chat
                             </Button>
                         </CreateNewChatButtonContainer>
-                        <MasterChatItemList>
+                        <MasterChatItemList className="customScrollContainer">
                             {openChats.map(chatDocument => {
                                 return MasterChatItemTemplate(chatDocument, getLatestAssociatedChatMessage(chatDocument["id"]))
                             })}
@@ -309,7 +326,9 @@ const MasterChatItemTemplate = (chatDocument, latestMessage) => {
     return <MasterChatItemContainer key={chatDocument["id"]}>
         <Hidden xsDown>
             <Box display="flex" flexGrow={0} flexShrink={0} pl={1}>
-                <Avatar alt="" src=""/>
+                <Avatar alt="xander" src="/">
+
+                </Avatar>
             </Box>
         </Hidden>
         <Box display="flex" flexGrow={1} flexShrink={0} px={2} flexDirection="column">
