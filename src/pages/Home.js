@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import '../css/messageBubbleStyles.css'
 import '../css/customScrollbar.css'
 import styled from "styled-components";
@@ -14,6 +14,8 @@ import {Typography} from "@material-ui/core";
 import SendIcon from '@material-ui/icons/Send';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 import IconButton from "@material-ui/core/IconButton";
+import {useSelector} from "react-redux";
+import {auth} from "../services/firebase";
 
 const HomeCanvas = styled(Box)`
   display: flex;
@@ -113,6 +115,10 @@ const CreateNewChatButtonContainer = styled(Box)`
   background: ${theme.colors.secondary};
 `;
 
+const MasterChatItemList = styled(Box)`
+  //todo make this scrollable (if and when the master items overflow)
+`
+
 const MasterChatItemContainer = styled(Box)`
   display: flex;
   flex-direction: row;
@@ -157,6 +163,14 @@ const MessageArea = styled(Box)`
   opacity: 1;
 `;
 
+const MessageList = styled.ul`
+   width: 100%;
+   padding: 0;
+   margin: 0;
+   overflow-x: hidden;
+   overflowy: scroll;
+`
+
 const SendNewMessageArea = styled(Box)`
   display: flex;
   justify-content: space-between;
@@ -184,6 +198,26 @@ const MessageInput = styled.input`
 
 
 const Home = () => {
+    const openChats = useSelector(state => state.chatRooms);
+    const availableMessages = useSelector(state => state.messages);
+    const myUser = useSelector(state => state.user);
+    const currentlyOpenChat = useSelector(state => state.currentlyOpenChat);
+
+    const getAssociatedMessages = (chatId) => {
+        return availableMessages.filter(message => message.chatId === chatId)
+    }
+
+    const getLatestAssociatedChatMessage = (chatId) => {
+        let asMes = availableMessages.filter(message => message.chatId === chatId)[0];
+        console.log(asMes);
+        return asMes;
+    }
+
+    useEffect(() => {
+        console.log("__Home Rerender__")
+        // console.log(currentlySelectedChat);
+    }, []);
+
     return (
         <HomeCanvas>
             <AppContainer>
@@ -206,87 +240,30 @@ const Home = () => {
                                 New Chat
                             </Button>
                         </CreateNewChatButtonContainer>
-                        {MasterChatItemTemplate()}
+                        <MasterChatItemList>
+                            {openChats.map(chatDocument => {
+                                return MasterChatItemTemplate(chatDocument, getLatestAssociatedChatMessage(chatDocument["id"]))
+                            })}
+                        </MasterChatItemList>
                     </MasterContainer>
                     <DetailContainer>
                         <ChatNameBanner>
                             <Typography>
-                                Group name here
+                                {currentlyOpenChat && currentlyOpenChat["groupName"]}
                             </Typography>
                             {/*todo online bubble if personal chat*/}
                         </ChatNameBanner>
                         <div style={{flex: "1", display: "flex", overflow: "auto"}}>
                             <MessageArea>
-                                <ul className="rounded-messages messages-width-large customScrollContainer" style={{
-                                    width: "100%",
-                                    padding: "0",
-                                    margin: "0",
-                                    overflowX: "hidden",
-                                    overflowY: "scroll"
-                                }}>
+                                <MessageList className="rounded-messages messages-width-large customScrollContainer">
                                     <li>Hey, how are you?</li>
-                                    <li className="right-msg no-tail">Hey! Long time, I'm doing well. How about
-                                        yourself?
-                                    </li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-                                    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
                                     <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
                                     <li className="time"><strong>Today</strong> 10:37am</li>
                                     <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
                                         crazy,
                                         but in a good way, for me!
                                     </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-                                    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's
-                                        crazy,
-                                        but in a good way, for me!
-                                    </li>
-
-                                </ul>
+                                </MessageList>
                                 {BubbleMessageItemTemplate()}
                             </MessageArea>
                         </div>
@@ -306,14 +283,14 @@ const Home = () => {
     );
 };
 
-let awe = <ul className="rounded-messages messages-width-large" style={{width: "100%"}}>
-    <li>Hey, how are you?</li>
-    <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
-    <li className="time"><strong>Today</strong> 10:37am</li>
-    <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's crazy,
-        but in a good way, for me!
-    </li>
-</ul>
+// let temp = <ul className="rounded-messages messages-width-large" style={{width: "100%"}}>
+//     <li>Hey, how are you?</li>
+//     <li className="right-msg">Hey! Long time, I'm doing well. How about yourself?</li>
+//     <li className="time"><strong>Today</strong> 10:37am</li>
+//     <li>Yeah, it's been a long time, and I'm glad to hear you're doing well. Life's crazy,
+//         but in a good way, for me!
+//     </li>
+// </ul>
 
 //todo give these components actual parameters
 const BubbleMessageItemTemplate = (props) => {
@@ -322,8 +299,14 @@ const BubbleMessageItemTemplate = (props) => {
     </>
 }
 
-const MasterChatItemTemplate = (props) => {
-    return <MasterChatItemContainer>
+const MasterChatItemTemplate = (chatDocument, latestMessage) => {
+
+        useEffect(() => {
+            console.log("__Home Rerender__")
+            // console.log(currentlySelectedChat);
+        }, []);
+
+    return <MasterChatItemContainer key={chatDocument["id"]}>
         <Hidden xsDown>
             <Box display="flex" flexGrow={0} flexShrink={0} pl={1}>
                 <Avatar alt="" src=""/>
@@ -333,14 +316,16 @@ const MasterChatItemTemplate = (props) => {
             <Box display="flex" flexGrow={1} flexShrink={0} flexDirection="row"
                  justifyContent="space-between">
                 <Typography>
-                    Username
+                    {chatDocument["groupName"]}
                 </Typography>
                 <Typography>
+                    {/*todo get last message associated with this chat*/}
                     Time
                 </Typography>
             </Box>
             <Box display="flex" flexGrow={1} flexShrink={0} pt={1} flexDirection="column">
-                Chat message here
+                {/*todo get last message associated with this chat*/}
+                {latestMessage && latestMessage["message"]}
             </Box>
         </Box>
     </MasterChatItemContainer>
